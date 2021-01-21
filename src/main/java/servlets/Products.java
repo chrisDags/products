@@ -16,13 +16,13 @@ import java.io.PrintWriter;
     The database 'mystore' is created if it does not exist. Please check resources/hibernate.cfg.xml
  */
 
-@WebServlet(name ="Products", urlPatterns="/")
+@WebServlet(name = "Products", urlPatterns = "/")
 public class Products extends HttpServlet {
 
     Session session;
 
     @Override
-    public void init(){
+    public void init() {
         session = HibernateUtils.buildSessionFactory().openSession();
         session.beginTransaction();
 
@@ -66,22 +66,33 @@ public class Products extends HttpServlet {
         String productId = httpServletRequest.getParameter("product-id");
         PrintWriter out = httpServletResponse.getWriter();
 
-        ProductEntity productEntity = session.get(ProductEntity.class, Long.parseLong(productId));
+        try {
 
-        if (productEntity != null){
-
-            String checkInStockStr;
-
-            if(productEntity.isInStock()){
-                checkInStockStr = " and it is in stock!";
-            }else {
-                checkInStockStr = " but it is not in stock...";
+            if (!productId.matches("[0-9]+")) {
+                throw new NumberFormatException();
             }
-            out.println("Found product in database: " +
-                    productEntity.getProductName() + " with price " + productEntity.getPrice() + checkInStockStr);
-        }else{
-            out.println("No product found for id: " + productId);
+
+            ProductEntity productEntity = session.get(ProductEntity.class, Long.parseLong(productId));
+
+            if (productEntity != null) {
+
+                String checkInStockStr;
+
+                if (productEntity.isInStock()) {
+                    checkInStockStr = " and it is in stock!";
+                } else {
+                    checkInStockStr = " but it is not in stock...";
+                }
+                out.println("Found product in database: " +
+                        productEntity.getProductName() + " with price " + productEntity.getPrice() + checkInStockStr);
+            } else {
+                out.println("No product found for id: " + productId);
+            }
+        } catch (NumberFormatException e) {
+            out.println("Error: only integers are allowed.");
         }
+
+
 
     }
 
